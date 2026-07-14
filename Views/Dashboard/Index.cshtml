@@ -1,0 +1,192 @@
+@model IEnumerable<TaskManagementSystem.Models.TaskItem>
+
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<div class="dashboard-header">
+    <div>
+        <h1>Hello, @ViewBag.Name 👋</h1>
+        <p>Manage your study tasks, deadlines, calendar, and alerts.</p>
+    </div>
+
+    <div class="dashboard-actions">
+        <a asp-controller="Tasks" asp-action="Create" class="main-btn">+ Create Task</a>
+        <a asp-controller="Tasks" asp-action="Index" class="main-btn secondary">View Tasks</a>
+        <a asp-controller="Account" asp-action="Logout" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<section class="stats-row">
+    <div class="status-box blue">
+        <h2>@ViewBag.Total</h2>
+        <p>Total Tasks</p>
+    </div>
+
+    <div class="status-box purple">
+        <h2>@ViewBag.Pending</h2>
+        <p>Pending</p>
+    </div>
+
+    <div class="status-box orange">
+        <h2>@ViewBag.InProgress</h2>
+        <p>In Progress</p>
+    </div>
+
+    <div class="status-box green">
+        <h2>@ViewBag.Completed</h2>
+        <p>Completed</p>
+    </div>
+
+    <div class="status-box red">
+        <h2>@ViewBag.Incomplete</h2>
+        <p>Incomplete</p>
+    </div>
+
+    <div class="status-box pink">
+        <h2>@ViewBag.Urgent</h2>
+        <p>Urgent</p>
+    </div>
+</section>
+
+<section class="dashboard-panel-grid">
+    <div class="panel-card chart-panel">
+        <h2>Task Progress</h2>
+        <div class="chart-box">
+            <canvas id="taskChart"></canvas>
+        </div>
+    </div>
+
+    <div class="panel-card">
+        <h2>Deadline Alerts</h2>
+
+        @foreach (var task in Model
+            .Where(t => t.Status != TaskManagementSystem.Models.TaskProgressStatus.Completed)
+            .OrderBy(t => t.Deadline)
+            .Take(5))
+        {
+            var hoursLeft = (task.Deadline - DateTime.Now).TotalHours;
+            var alertClass = hoursLeft < 0 ? "overdue-alert" : hoursLeft <= 6 ? "danger-alert" : "normal-alert";
+
+            <div class="deadline-alert @alertClass">
+                <strong>@task.Title</strong>
+                <span>@task.Category • @task.Priority</span>
+                <p>@task.Deadline.ToString("dd MMM yyyy hh:mm tt")</p>
+            </div>
+        }
+    </div>
+
+    <div class="panel-card calendar-panel">
+        <h2>Task Calendar</h2>
+
+        <div class="calendar-list">
+            @foreach (var task in Model.OrderBy(t => t.Deadline).Take(6))
+            {
+                <div class="calendar-item">
+                    <div class="calendar-date">
+                        <strong>@task.Deadline.ToString("dd")</strong>
+                        <span>@task.Deadline.ToString("MMM")</span>
+                    </div>
+
+                    <div>
+                        <h4>@task.Title</h4>
+                        <p>@task.Deadline.ToString("hh:mm tt") • @task.Status</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<h2 class="section-title">Recent Tasks</h2>
+
+<section class="task-grid">
+    @foreach (var task in Model.Take(6))
+    {
+        <div class="task-card">
+            <div class="task-top">
+                <h3>@task.Title</h3>
+                <span class="priority">@task.Priority</span>
+            </div>
+
+            <p>@task.Description</p>
+
+            <div class="task-meta">
+                <span>@task.Category</span>
+                <span>@task.Status</span>
+            </div>
+
+            <p class="deadline">Deadline: @task.Deadline.ToString("dd MMM yyyy hh:mm tt")</p>
+
+            <div class="task-actions">
+                <a asp-controller="Tasks" asp-action="Edit" asp-route-id="@task.Id">Edit</a>
+
+                @if (task.Status == TaskManagementSystem.Models.TaskProgressStatus.Pending ||
+                     task.Status == TaskManagementSystem.Models.TaskProgressStatus.InProgress)
+                {
+                    <a asp-controller="Tasks" asp-action="Complete" asp-route-id="@task.Id">Complete</a>
+                }
+
+                <a asp-controller="Tasks" asp-action="Delete" asp-route-id="@task.Id" class="delete">Delete</a>
+            </div>
+        </div>
+    }
+</section>
+
+<div id="toastBox" class="toast-box"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    new Chart(document.getElementById('taskChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'In Progress', 'Completed', 'Incomplete'],
+            datasets: [{
+                data: [
+                    @ViewBag.Pending,
+                    @ViewBag.InProgress,
+                    @ViewBag.Completed,
+                    @ViewBag.Incomplete
+                ],
+                backgroundColor: ['#8b5cf6', '#f97316', '#22c55e', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%'
+        }
+    });
+
+    function showToast(message, type) {
+        const box = document.getElementById("toastBox");
+        const toast = document.createElement("div");
+        toast.className = "toast-alert " + type;
+        toast.innerHTML = message;
+        box.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 7000);
+    }
+
+    const alarms = [
+        @foreach (var task in Model.Where(t => t.Status != TaskManagementSystem.Models.TaskProgressStatus.Completed))
+        {
+            var minutesLeft = (int)(task.Deadline - DateTime.Now).TotalMinutes;
+            <text>{ title: "@task.Title", minutes: @minutesLeft },</text>
+        }
+    ];
+
+    alarms.forEach(task => {
+        if (task.minutes < 0) {
+            showToast("🚨 " + task.title + " is overdue!", "overdue");
+        } else if (task.minutes <= 60) {
+            showToast("⏰ " + task.title + " deadline is within 1 hour!", "danger");
+        } else if (task.minutes <= 360) {
+            showToast("🔔 " + task.title + " deadline is within 6 hours.", "normal");
+        }
+    });
+</script>

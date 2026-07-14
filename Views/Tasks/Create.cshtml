@@ -1,0 +1,28 @@
+@model TaskManagementSystem.Models.TaskItem
+
+@{
+    ViewData["Title"] = "Create Task";
+}
+
+<div class="form-card">
+    <h2>Create New Task</h2>
+
+    <form asp-action="Create" method="post">
+        <label>Task Title</label>
+        <input asp-for="Title" placeholder="Example: DSA Lecture 1" required />
+
+        <label>Description</label>
+        <textarea asp-for="Description" placeholder="Write task details..."></textarea>
+
+        <label>Priority</label>
+        <select asp-for="Priority" asp-items="Html.GetEnumSelectList<TaskManagementSystem.Models.Priority>()"></select>
+
+        <label>Category</label>
+        <select asp-for="Category" asp-items="Html.GetEnumSelectList<TaskManagementSystem.Models.TaskCategory>()"></select>
+
+        <label>Deadline</label>
+        <input asp-for="Deadline" type="datetime-local" required />
+
+        <button type="submit">Create Task</button>
+    </form>
+</div>

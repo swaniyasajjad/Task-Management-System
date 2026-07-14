@@ -1,0 +1,74 @@
+@model IEnumerable<TaskManagementSystem.Models.TaskItem>
+
+@{
+    ViewData["Title"] = "My Tasks";
+}
+
+<h1 class="section-title">My Tasks</h1>
+
+<form method="get" class="filter-box">
+    <input name="search" placeholder="Search task..." />
+
+    <select name="status">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="InProgress">In Progress</option>
+        <option value="Completed">Completed</option>
+        <option value="Incomplete">Incomplete</option>
+    </select>
+
+    <select name="priority">
+        <option value="">All Priority</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+        <option value="Urgent">Urgent</option>
+    </select>
+
+    <select name="category">
+        <option value="">All Category</option>
+        <option value="Study">Study</option>
+        <option value="Assignment">Assignment</option>
+        <option value="Exam">Exam</option>
+        <option value="Project">Project</option>
+        <option value="Personal">Personal</option>
+        <option value="Other">Other</option>
+    </select>
+
+    <button type="submit">Filter</button>
+</form>
+
+<div class="task-grid">
+    @foreach (var task in Model)
+    {
+        <div class="task-card">
+            <div class="task-top">
+                <h3>@task.Title</h3>
+                <span class="priority">@task.Priority</span>
+            </div>
+
+            <p>@task.Description</p>
+
+            <div class="task-meta">
+                <span>@task.Category</span>
+                <span>@task.Status</span>
+            </div>
+
+            <p class="deadline">
+                Deadline: @task.Deadline.ToString("dd MMM yyyy hh:mm tt")
+            </p>
+
+            <div class="task-actions">
+                <a asp-action="Edit" asp-route-id="@task.Id">Edit</a>
+
+                @if (task.Status == TaskManagementSystem.Models.TaskProgressStatus.Pending ||
+                     task.Status == TaskManagementSystem.Models.TaskProgressStatus.InProgress)
+                {
+                    <a asp-action="Complete" asp-route-id="@task.Id">Complete</a>
+                }
+
+                <a asp-action="Delete" asp-route-id="@task.Id" class="delete">Delete</a>
+            </div>
+        </div>
+    }
+</div>

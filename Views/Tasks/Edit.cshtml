@@ -1,0 +1,49 @@
+@model TaskManagementSystem.Models.TaskItem
+
+@{
+    ViewData["Title"] = "Edit Task";
+}
+
+<div class="form-card">
+    <h2>Edit Task</h2>
+
+    <form asp-action="Edit" method="post">
+
+        <input asp-for="Id" type="hidden" />
+
+        <label>Task Title</label>
+        <input asp-for="Title" />
+
+        <label>Description</label>
+        <textarea asp-for="Description"></textarea>
+
+        <label>Priority</label>
+        <select asp-for="Priority"
+                asp-items="Html.GetEnumSelectList<TaskManagementSystem.Models.Priority>()">
+        </select>
+
+        <label>Category</label>
+        <select asp-for="Category"
+                asp-items="Html.GetEnumSelectList<TaskManagementSystem.Models.TaskCategory>()">
+        </select>
+
+        <label>Status</label>
+        <select asp-for="Status"
+                asp-items="Html.GetEnumSelectList<TaskManagementSystem.Models.TaskProgressStatus>()">
+        </select>
+
+        <label>Deadline</label>
+        <input asp-for="Deadline" type="datetime-local" />
+
+        <div class="task-actions">
+            <button class="btn btn-primary" type="submit">
+                Save Changes
+            </button>
+
+            <a asp-action="Index" class="btn btn-secondary">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
